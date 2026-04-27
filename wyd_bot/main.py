@@ -258,12 +258,23 @@ def main() -> None:
         action="store_true",
         help="Ativa logging detalhado (DEBUG)",
     )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Abre a interface gráfica (GUI) ao invés do terminal",
+    )
     args = parser.parse_args()
 
     if args.verbose:
         import logging
 
         setup_logger("wyd_bot", level=logging.DEBUG)
+
+    if args.gui:
+        from wyd_bot.gui import run_gui
+
+        run_gui()
+        return
 
     if args.calibrate:
         _run_calibration()
