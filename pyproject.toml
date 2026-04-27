@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wyd-bot"
+version = "1.0.0"
+description = "Bot inteligente para WYD (With Your Destiny) usando visão computacional e IA"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    {name = "Dev-Aprendiz0"}
+]
+
+dependencies = [
+    "opencv-python>=4.8.0",
+    "numpy>=1.24.0",
+    "mss>=9.0.0",
+    "pyautogui>=0.9.54",
+    "Pillow>=10.0.0",
+    "pyyaml>=6.0",
+    "pynput>=1.7.6",
+]
+
+[project.optional-dependencies]
+ml = [
+    "torch>=2.0.0",
+    "gymnasium>=0.29.0",
+    "stable-baselines3>=2.0.0",
+    "tensorboard>=2.14.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+]
+
+[project.scripts]
+wyd-bot = "wyd_bot.main:main"
+
+[tool.setuptools.packages.find]
+include = ["wyd_bot*"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
