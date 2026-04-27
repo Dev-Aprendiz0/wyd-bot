@@ -65,43 +65,81 @@ source venv/bin/activate
 pip install -e .
 ```
 
-## Uso Rápido
+## Passo a Passo para Executar
 
-### 1. Calibração (primeira vez)
+### Passo 1: Instalar
 
-Abra o WYD e execute o modo de calibração para capturar uma screenshot:
+```powershell
+git clone https://github.com/Dev-Aprendiz0/wyd-bot.git
+cd wyd-bot
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -e .
+```
 
-```bash
-# Opção 1: Com o venv ativado
-wyd-bot --calibrate
+### Passo 2: Calibrar (primeira vez)
 
-# Opção 2: Sem ativar o venv (funciona sempre)
+1. Abra o WYD e entre no jogo
+2. Rode o comando de calibração:
+
+```powershell
 python -m wyd_bot --calibrate
 ```
 
-Use a screenshot gerada em `screenshots/` para identificar as coordenadas das barras de HP/MP e ajuste no arquivo `config/default.yaml`.
+3. Pressione **Enter** quando a janela do WYD estiver visível
+4. Uma screenshot será salva em `screenshots/`
+5. Abra a screenshot e identifique as coordenadas (x, y, largura, altura) das barras de HP e MP
+6. Edite `config/default.yaml` com as coordenadas encontradas:
 
-### 2. Executar o bot
+```yaml
+hp_mp:
+  hp_region:
+    x: 90      # ajuste para sua tela
+    y: 8       # ajuste para sua tela
+    width: 150
+    height: 12
+  mp_region:
+    x: 90      # ajuste para sua tela
+    y: 24      # ajuste para sua tela
+    width: 150
+    height: 12
+```
 
-```bash
-# Com configuração padrão
+### Passo 3: Executar o bot
+
+1. Abra o WYD e posicione seu personagem na área de farm
+2. Rode o bot:
+
+```powershell
 python -m wyd_bot
+```
 
-# Com configuração customizada
-python -m wyd_bot -c config/minha_config.yaml
-
-# Com logging detalhado
+Ou com log detalhado:
+```powershell
 python -m wyd_bot -v
 ```
 
-> **Nota Windows:** Se `wyd-bot` não funcionar como comando, use `python -m wyd_bot` que funciona sempre.
-
-### 3. Controles
+### Passo 4: Controlar durante execução
 
 | Tecla | Ação |
 |-------|------|
-| F9    | Pausar / Continuar |
-| F10   | Parar o bot |
+| **F9**  | Pausar / Continuar o bot |
+| **F10** | Parar o bot completamente |
+
+### Teclas padrão do bot
+
+| Ação | Tecla | Configurável em |
+|------|-------|-----------------|
+| Poção de HP | **Q** | `combat.hp_potion_key` |
+| Poção de MP | **W** | `combat.mp_potion_key` |
+| Ataque | **Space** | `combat.attack_key` |
+| Selecionar alvo | **Tab** | `combat.target_key` |
+| Skills | **1, 2, 3, 4** | `combat.skill_keys` |
+| Loot | **Z** | `farm.loot_key` |
+| Fugir | **Escape** | `combat.flee_key` |
+| Ressuscitar | **Enter** | `resurrect.resurrect_key` |
+
+> **Importante:** Configure as teclas no `config/default.yaml` para corresponder à sua configuração no jogo!
 
 ## Configuração
 
@@ -121,7 +159,8 @@ combat:
   attack_key: "space"
   skill_keys: ["1", "2", "3", "4"]
   hp_heal_threshold: 0.5   # Usar poção quando HP < 50%
-  hp_potion_key: "f1"
+  hp_potion_key: "q"       # Tecla de poção de HP
+  mp_potion_key: "w"       # Tecla de poção de MP
   potion_cooldown: 2.0     # Segundos entre poções
 
 # Farm

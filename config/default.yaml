@@ -31,8 +31,8 @@ combat:
   target_key: "tab"
   hp_heal_threshold: 0.5
   mp_heal_threshold: 0.3
-  hp_potion_key: "f1"
-  mp_potion_key: "f2"
+  hp_potion_key: "q"
+  mp_potion_key: "w"
   hp_emergency_threshold: 0.2
   flee_key: "escape"
   potion_cooldown: 2.0
