@@ -108,18 +108,22 @@ hp_mp:
 ### Passo 3: Executar o bot
 
 1. Abra o WYD e posicione seu personagem na área de farm
-2. Rode o bot:
+2. Rode o bot com a **interface gráfica** (recomendado):
 
+```powershell
+python -m wyd_bot --gui
+```
+
+Ou pelo terminal (modo antigo):
 ```powershell
 python -m wyd_bot
 ```
 
-Ou com log detalhado:
-```powershell
-python -m wyd_bot -v
-```
-
 ### Passo 4: Controlar durante execução
+
+**Na GUI:** Use os botões Iniciar, Pausar e Parar na interface.
+
+**No terminal:** Use as hotkeys:
 
 | Tecla | Ação |
 |-------|------|

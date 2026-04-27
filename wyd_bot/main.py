@@ -225,7 +225,15 @@ class WYDBot:
         self._stop_event.set()
 
     def _setup_signal_handlers(self) -> None:
-        """Configura handlers para sinais do sistema."""
+        """Configura handlers para sinais do sistema.
+
+        Só funciona na thread principal; ignora silenciosamente quando
+        chamado de outra thread (ex: GUI).
+        """
+        import threading
+
+        if threading.current_thread() is not threading.main_thread():
+            return
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
@@ -258,12 +266,23 @@ def main() -> None:
         action="store_true",
         help="Ativa logging detalhado (DEBUG)",
     )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Abre a interface gráfica (GUI) ao invés do terminal",
+    )
     args = parser.parse_args()
 
     if args.verbose:
         import logging
 
         setup_logger("wyd_bot", level=logging.DEBUG)
+
+    if args.gui:
+        from wyd_bot.gui import run_gui
+
+        run_gui()
+        return
 
     if args.calibrate:
         _run_calibration()
