@@ -401,6 +401,7 @@ class BotGUI:
             return
 
         self._apply_key_config()
+        self._sync_strategy_keys()
 
         self._running = True
         self._paused = False
@@ -439,6 +440,18 @@ class BotGUI:
                 val = self._key_vars[label].get().strip()
                 if val:
                     setattr(obj, attr, val)
+
+    def _sync_strategy_keys(self) -> None:
+        """Atualiza teclas em strategies que armazenam cópia própria."""
+        if not self._bot:
+            return
+        from wyd_bot.decision.strategy import ResurrectStrategy
+
+        for s in self._bot.rule_engine._strategies:
+            if isinstance(s, ResurrectStrategy):
+                val = self._key_vars.get("Ressuscitar")
+                if val:
+                    s.resurrect_key = val.get().strip() or s.resurrect_key
 
     def _run_bot(self, generation: int) -> None:
         try:
