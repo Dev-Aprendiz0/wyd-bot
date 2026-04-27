@@ -225,7 +225,15 @@ class WYDBot:
         self._stop_event.set()
 
     def _setup_signal_handlers(self) -> None:
-        """Configura handlers para sinais do sistema."""
+        """Configura handlers para sinais do sistema.
+
+        Só funciona na thread principal; ignora silenciosamente quando
+        chamado de outra thread (ex: GUI).
+        """
+        import threading
+
+        if threading.current_thread() is not threading.main_thread():
+            return
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
