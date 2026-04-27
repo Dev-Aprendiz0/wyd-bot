@@ -57,6 +57,7 @@ class BotGUI:
         self._paused = False
         self._log_queue: queue.Queue[str] = queue.Queue()
         self._update_interval = 500
+        self._bot_generation = 0
 
         self._setup_styles()
         self._build_ui()
@@ -405,8 +406,10 @@ class BotGUI:
         self._stop_btn.configure(state=tk.NORMAL)
         self._status_var.set("Rodando")
 
+        self._bot_generation += 1
+        gen = self._bot_generation
         self._bot_thread = threading.Thread(
-            target=self._run_bot, daemon=True
+            target=self._run_bot, args=(gen,), daemon=True
         )
         self._bot_thread.start()
         logger.info("Bot iniciado via GUI")
@@ -434,15 +437,19 @@ class BotGUI:
                 if val:
                     setattr(obj, attr, val)
 
-    def _run_bot(self) -> None:
+    def _run_bot(self, generation: int) -> None:
         try:
             if self._bot:
                 self._bot.start()
         except Exception:
             logger.exception("Erro no bot")
         finally:
-            self._running = False
-            self.root.after(0, self._on_bot_stopped)
+            if self._bot_generation == generation:
+                self._running = False
+                try:
+                    self.root.after(0, self._on_bot_stopped)
+                except Exception:
+                    pass
 
     def _on_bot_stopped(self) -> None:
         self._start_btn.configure(state=tk.NORMAL)
@@ -467,10 +474,9 @@ class BotGUI:
         if self._bot:
             self._bot._running = False
             self._bot._stop_event.set()
-        self._running = False
         self._paused = False
         self._pause_btn.configure(text="Pausar")
-        self._on_bot_stopped()
+        self._status_var.set("Parando...")
         logger.info("Bot parado via GUI")
 
     def run(self) -> None:
