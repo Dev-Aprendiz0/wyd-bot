@@ -378,9 +378,12 @@ class BotGUI:
         mins = state.session_duration / 60
         self._session_var.set(f"Sessão: {mins:.1f} min")
 
+        self._paused = self._bot._paused
         if self._paused:
+            self._pause_btn.configure(text="Continuar")
             self._status_var.set("Pausado")
         else:
+            self._pause_btn.configure(text="Pausar")
             self._status_var.set("Rodando")
 
     def _on_start(self) -> None:
