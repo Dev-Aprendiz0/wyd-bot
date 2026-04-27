@@ -75,7 +75,10 @@ class RuleEngine:
         self._tick_count += 1
 
         if not state.player.is_alive:
-            if state.mode != BotMode.DEAD:
+            if (
+                state.mode != BotMode.DEAD
+                and state.mode != BotMode.RESURRECTING
+            ):
                 state.stats.deaths += 1
                 logger.warning(
                     "Personagem morreu! Total mortes: %d",

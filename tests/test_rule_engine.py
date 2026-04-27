@@ -74,6 +74,26 @@ def test_tick_dead_only_increments_once():
     assert state.stats.deaths == 1
 
 
+def test_tick_dead_no_recount_after_resurrect_attempt():
+    """Morte não é recontada após tentativa de ressurreição."""
+    from wyd_bot.decision.state import BotMode
+
+    engine = RuleEngine()
+    engine.register_defaults()
+
+    state = GameState()
+    state.player.is_alive = False
+    actions = MagicMock()
+
+    engine.tick(state, actions)
+    assert state.stats.deaths == 1
+
+    state.mode = BotMode.RESURRECTING
+    state.player.is_alive = False
+    engine.tick(state, actions)
+    assert state.stats.deaths == 1
+
+
 def test_tick_count():
     engine = RuleEngine()
     engine.register_defaults()
