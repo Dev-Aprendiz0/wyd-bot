@@ -172,10 +172,8 @@ class CalibrationWindow:
         time.sleep(0.5)
 
         try:
-            capture = ScreenCapture()
-            capture.start()
-            frame = capture.capture_frame()
-            capture.stop()
+            with ScreenCapture() as capture:
+                frame = capture.capture_frame()
             self._screenshot = frame
             self._display_image(frame)
             self._info_var.set(
