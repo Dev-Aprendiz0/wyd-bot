@@ -320,7 +320,6 @@ class FarmStrategy(Strategy):
             state.stats.skills_used += 1
         else:
             actions.attack()
-        state.last_combat_time = now
 
         if self._attack_cycle % 15 == 0:
             self._patrol(state, actions)
