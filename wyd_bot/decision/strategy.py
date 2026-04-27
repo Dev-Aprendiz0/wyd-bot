@@ -229,7 +229,15 @@ class AutoBuffStrategy(Strategy):
 
 
 class FarmStrategy(Strategy):
-    """Farm com padrões de movimento variados e anti-detecção."""
+    """Farm com Tab-targeting, ataque automático e patrulha.
+
+    Funciona em dois modos:
+    - Com templates: detecta monstros visualmente e clica neles.
+    - Sem templates (padrão): usa Tab para selecionar alvos no jogo
+      e ataca com rotação de skills + ataque básico.
+    """
+
+    TAB_TARGET_INTERVAL = 3.0
 
     def __init__(
         self,
@@ -239,6 +247,8 @@ class FarmStrategy(Strategy):
         self.screen_center = screen_center
         self.walk_pattern = walk_pattern
         self._patrol_index: int = 0
+        self._last_tab_time: float = 0.0
+        self._attack_cycle: int = 0
 
     @property
     def name(self) -> str:
@@ -249,7 +259,7 @@ class FarmStrategy(Strategy):
         return 50
 
     def should_activate(self, state: GameState) -> bool:
-        return state.has_monsters_nearby or not state.has_target
+        return True
 
     def execute(self, state: GameState, actions: GameActions) -> None:
         if state.has_target:
@@ -257,7 +267,7 @@ class FarmStrategy(Strategy):
         elif state.has_monsters_nearby:
             self._find_and_attack(state, actions)
         else:
-            self._patrol(state, actions)
+            self._tab_and_attack(state, actions)
 
     def _attack_target(
         self, state: GameState, actions: GameActions
@@ -291,24 +301,46 @@ class FarmStrategy(Strategy):
                 *monster.center,
             )
 
+    def _tab_and_attack(
+        self, state: GameState, actions: GameActions
+    ) -> None:
+        """Modo sem templates: Tab para selecionar alvo e atacar."""
+        now = time.time()
+        if now - self._last_tab_time > self.TAB_TARGET_INTERVAL:
+            actions.select_target()
+            self._last_tab_time = now
+            delay = random.uniform(0.15, 0.3)
+            time.sleep(delay)
+            logger.debug("Tab targeting - procurando alvo")
+
+        self._attack_cycle += 1
+        best_skill = actions.get_best_available_skill()
+        if best_skill is not None:
+            actions.use_skill(best_skill)
+            state.stats.skills_used += 1
+        else:
+            actions.attack()
+
+        if self._attack_cycle % 15 == 0:
+            self._patrol(state, actions)
+
     def _patrol(self, state: GameState, actions: GameActions) -> None:
-        if state.idle_duration > 5.0:
-            cx, cy = self.screen_center
-            pattern = self.walk_pattern
-            if pattern == "mixed":
-                pattern = random.choice(
-                    ["circular", "square", "random"]
-                )
+        cx, cy = self.screen_center
+        pattern = self.walk_pattern
+        if pattern == "mixed":
+            pattern = random.choice(
+                ["circular", "square", "random"]
+            )
 
-            if pattern == "circular":
-                actions.walk_circular(cx, cy, radius=150, steps=4)
-            elif pattern == "square":
-                actions.walk_square(cx, cy, size=150)
-            else:
-                actions.walk_random(cx, cy, radius=200)
+        if pattern == "circular":
+            actions.walk_circular(cx, cy, radius=150, steps=4)
+        elif pattern == "square":
+            actions.walk_square(cx, cy, size=150)
+        else:
+            actions.walk_random(cx, cy, radius=200)
 
-            state.idle_since = time.time()
-            logger.debug("Patrulhando (%s)", pattern)
+        state.idle_since = time.time()
+        logger.debug("Patrulhando (%s)", pattern)
 
 
 class LootStrategy(Strategy):
