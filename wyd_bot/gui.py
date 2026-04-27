@@ -387,8 +387,6 @@ class BotGUI:
 
         config_path = self._config_var.get().strip()
 
-        self._apply_key_config(config_path)
-
         try:
             from pathlib import Path
 
@@ -397,6 +395,8 @@ class BotGUI:
         except Exception:
             logger.exception("Erro ao criar bot")
             return
+
+        self._apply_key_config()
 
         self._running = True
         self._paused = False
@@ -411,42 +411,28 @@ class BotGUI:
         self._bot_thread.start()
         logger.info("Bot iniciado via GUI")
 
-    def _apply_key_config(self, config_path: str) -> None:
-        """Aplica as teclas da GUI no config antes de iniciar."""
-        from pathlib import Path
-
-        import yaml
-
-        path = Path(config_path)
-        if not path.exists():
+    def _apply_key_config(self) -> None:
+        """Aplica as teclas da GUI in-memory no config do bot."""
+        if not self._bot:
             return
 
-        try:
-            with open(path, encoding="utf-8") as f:
-                data = yaml.safe_load(f) or {}
-        except Exception:
-            return
+        cfg = self._bot.config.bot
 
-        key_map = {
-            "HP Potion": ("combat", "hp_potion_key"),
-            "MP Potion": ("combat", "mp_potion_key"),
-            "Ataque": ("combat", "attack_key"),
-            "Alvo": ("combat", "target_key"),
-            "Loot": ("farm", "loot_key"),
-            "Fuga": ("combat", "flee_key"),
-            "Ressuscitar": ("resurrect", "resurrect_key"),
+        key_map: dict[str, tuple[object, str]] = {
+            "HP Potion": (cfg.combat, "hp_potion_key"),
+            "MP Potion": (cfg.combat, "mp_potion_key"),
+            "Ataque": (cfg.combat, "attack_key"),
+            "Alvo": (cfg.combat, "target_key"),
+            "Loot": (cfg.farm, "loot_key"),
+            "Fuga": (cfg.combat, "flee_key"),
+            "Ressuscitar": (cfg.resurrect, "resurrect_key"),
         }
 
-        for label, (section, key) in key_map.items():
+        for label, (obj, attr) in key_map.items():
             if label in self._key_vars:
                 val = self._key_vars[label].get().strip()
                 if val:
-                    if section not in data:
-                        data[section] = {}
-                    data[section][key] = val
-
-        with open(path, "w", encoding="utf-8") as f:
-            yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+                    setattr(obj, attr, val)
 
     def _run_bot(self) -> None:
         try:
@@ -479,7 +465,8 @@ class BotGUI:
 
     def _on_stop(self) -> None:
         if self._bot:
-            self._bot.stop()
+            self._bot._running = False
+            self._bot._stop_event.set()
         self._running = False
         self._paused = False
         self._pause_btn.configure(text="Pausar")
@@ -494,7 +481,8 @@ class BotGUI:
 
     def _on_close(self) -> None:
         if self._bot and self._running:
-            self._bot.stop()
+            self._bot._running = False
+            self._bot._stop_event.set()
         self.root.destroy()
 
 
