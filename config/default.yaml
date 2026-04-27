@@ -1,87 +1,66 @@
-# ============================================================
-# WYD Bot - Legends of Midgard
-# Configuração Padrão
-# ============================================================
-# IMPORTANTE: Ajuste as regiões de HP/MP de acordo com a
-# resolução do seu jogo. Use o modo de calibração:
-#   wyd-bot --calibrate
-# ============================================================
+# Configuração do WYD Bot - Legends of Midgard
+# Ajuste os valores abaixo de acordo com a resolução do seu jogo.
 
-# Título da janela do WYD (usado para localizar o jogo)
 game_window_title: "With Your Destiny"
-
-# FPS de captura de tela (10 é suficiente para a maioria das ações)
 capture_fps: 10
-
-# Intervalo entre decisões do bot (em segundos)
 decision_interval: 0.1
 
-# Arquivo de log
-log_file: "logs/wyd_bot.log"
-
-# Salvar screenshot quando ocorrer erro
-screenshot_on_error: true
-
-# Hotkeys
-hotkey_toggle: "f9"   # Pausar/continuar
-hotkey_stop: "f10"    # Parar o bot
-
-# ============================================================
-# Barras de HP / MP
-# ============================================================
-# CALIBRAÇÃO NECESSÁRIA: As regiões abaixo são exemplos.
-# Execute wyd-bot --calibrate e use a screenshot para
-# identificar as coordenadas corretas das barras.
-# ============================================================
+# Regiões de HP/MP na tela (x, y, largura, altura)
+# Use --calibrate para capturar screenshot e ajustar
 hp_mp:
   hp_region:
-    x: 90
-    y: 8
-    width: 150
-    height: 12
+    x: 0
+    y: 0
+    width: 0
+    height: 0
   mp_region:
-    x: 90
-    y: 24
-    width: 150
-    height: 12
-  # Cor da barra de HP em HSV (vermelho)
+    x: 0
+    y: 0
+    width: 0
+    height: 0
   hp_color_lower: [0, 100, 100]
   hp_color_upper: [10, 255, 255]
-  # Cor da barra de MP em HSV (azul)
   mp_color_lower: [100, 100, 100]
   mp_color_upper: [130, 255, 255]
 
-# ============================================================
-# Combate
-# ============================================================
+# Configuração de combate
 combat:
   attack_key: "space"
   skill_keys: ["1", "2", "3", "4"]
   skill_cooldowns: [2.0, 3.0, 5.0, 8.0]
   target_key: "tab"
-  hp_heal_threshold: 0.5      # Usar poção de HP quando < 50%
-  mp_heal_threshold: 0.3      # Usar poção de MP quando < 30%
-  hp_potion_key: "f1"
-  mp_potion_key: "f2"
-  hp_emergency_threshold: 0.2 # Emergência quando HP < 20%
+  hp_heal_threshold: 0.5
+  mp_heal_threshold: 0.3
+  hp_potion_key: "q"
+  mp_potion_key: "w"
+  hp_emergency_threshold: 0.2
   flee_key: "escape"
+  potion_cooldown: 2.0
 
-# ============================================================
-# Farm
-# ============================================================
+# Configuração de farm
 farm:
   farm_radius: 200
   loot_enabled: true
   loot_key: "z"
   auto_target: true
-  walk_pattern: "circular"     # circular, square, random
+  walk_pattern: "mixed"  # circular, square, random, mixed
   walk_delay: 0.5
   max_idle_time: 10.0
   return_to_center: true
 
-# ============================================================
-# Detecção Visual
-# ============================================================
+# Configuração de auto-buff
+buff:
+  enabled: false
+  buff_keys: []  # Ex: ["5", "6", "7"] para teclas de buff
+  buff_interval: 300.0  # 5 minutos
+
+# Configuração de ressurreição automática
+resurrect:
+  enabled: true
+  resurrect_key: "enter"
+  wait_before_resurrect: 3.0
+
+# Detecção visual
 detection:
   monster_template_dir: "templates/monsters"
   item_template_dir: "templates/items"
@@ -92,3 +71,31 @@ detection:
     y: 0
     width: 0
     height: 0
+  rare_item_keywords:
+    - "legendary"
+    - "epic"
+    - "rare"
+    - "unique"
+    - "lendario"
+    - "epico"
+    - "raro"
+    - "unico"
+
+# Anti-detecção (delays humanizados)
+anti_detection:
+  enabled: true
+  min_action_delay: 0.02
+  max_action_delay: 0.15
+  mouse_offset_range: 3
+  random_pause_chance: 0.05  # 5% chance de pausa aleatória
+  random_pause_min: 0.5
+  random_pause_max: 2.0
+
+# Hotkeys
+hotkey_toggle: "f9"
+hotkey_stop: "f10"
+
+# Logging e screenshots
+log_file: "logs/wyd_bot.log"
+screenshot_on_error: true
+screenshot_dir: "screenshots"

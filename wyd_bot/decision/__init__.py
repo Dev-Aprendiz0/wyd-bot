@@ -2,13 +2,26 @@
 
 from wyd_bot.decision.rule_engine import RuleEngine
 from wyd_bot.decision.state import GameState
-from wyd_bot.decision.strategy import FarmStrategy, HealStrategy, LootStrategy, Strategy
+from wyd_bot.decision.strategy import (
+    AutoBuffStrategy,
+    FarmStrategy,
+    FleeStrategy,
+    HealStrategy,
+    LootStrategy,
+    ResurrectStrategy,
+    ReturnToTownStrategy,
+    Strategy,
+)
 
 __all__ = [
-    "GameState",
-    "RuleEngine",
-    "Strategy",
+    "AutoBuffStrategy",
     "FarmStrategy",
+    "FleeStrategy",
+    "GameState",
     "HealStrategy",
     "LootStrategy",
+    "ResurrectStrategy",
+    "ReturnToTownStrategy",
+    "RuleEngine",
+    "Strategy",
 ]
