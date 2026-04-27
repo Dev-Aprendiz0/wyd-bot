@@ -173,6 +173,21 @@ class WYDBot:
         hp_bars = self.detector.find_hp_bars_above_entities(np_frame)
         self.state.nearby_hp_bars = hp_bars
 
+        if not self.state.nearby_monsters and hp_bars:
+            from wyd_bot.vision.detector import Detection
+
+            for bar in hp_bars:
+                self.state.nearby_monsters.append(
+                    Detection(
+                        label="entity",
+                        x=bar.x,
+                        y=bar.y + bar.height,
+                        width=bar.width,
+                        height=bar.width,
+                        confidence=bar.confidence,
+                    )
+                )
+
         if self.state.nearby_monsters:
             self.state.player.is_in_combat = True
             self.state.idle_since = time.time()
