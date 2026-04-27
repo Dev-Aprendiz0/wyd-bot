@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import math
+import random
 import time
+from datetime import datetime
+from pathlib import Path
 
 from wyd_bot.automation.keyboard import KeyboardController
 from wyd_bot.automation.mouse import MouseController
@@ -22,114 +25,153 @@ class GameActions:
         mouse: MouseController | None = None,
         combat_config: CombatConfig | None = None,
         farm_config: FarmConfig | None = None,
+        screenshot_dir: str = "screenshots",
     ) -> None:
         self.keyboard = keyboard or KeyboardController()
         self.mouse = mouse or MouseController()
         self.combat = combat_config or CombatConfig()
         self.farm = farm_config or FarmConfig()
+        self._screenshot_dir = Path(screenshot_dir)
         self._skill_last_used: dict[int, float] = {}
 
         for i, key in enumerate(self.combat.skill_keys):
             if i < len(self.combat.skill_cooldowns):
-                self.keyboard.set_cooldown(key, self.combat.skill_cooldowns[i])
+                self.keyboard.set_cooldown(
+                    key, self.combat.skill_cooldowns[i]
+                )
 
     def attack(self) -> None:
-        """Executa ataque básico."""
+        """Executa ataque básico com delay humanizado."""
+        delay = random.uniform(0.02, 0.08)
+        time.sleep(delay)
         self.keyboard.press(self.combat.attack_key)
         logger.debug("Ataque executado")
 
     def select_target(self) -> None:
-        """Seleciona o próximo alvo."""
         self.keyboard.press(self.combat.target_key)
         logger.debug("Alvo selecionado")
 
     def use_skill(self, skill_index: int) -> bool:
-        """Usa uma skill pelo índice.
-
-        Args:
-            skill_index: Índice da skill (0-based).
-
-        Returns:
-            True se a skill foi usada, False se em cooldown.
-        """
+        """Usa uma skill pelo índice."""
         if skill_index >= len(self.combat.skill_keys):
             return False
 
         key = self.combat.skill_keys[skill_index]
         remaining = self.keyboard.get_remaining_cooldown(key)
         if remaining > 0:
-            logger.debug("Skill %d em cooldown (%.1fs restante)", skill_index, remaining)
             return False
 
+        delay = random.uniform(0.03, 0.1)
+        time.sleep(delay)
         self.keyboard.press(key)
         self._skill_last_used[skill_index] = time.time()
         logger.info("Skill %d usada (tecla: %s)", skill_index, key)
         return True
 
     def use_hp_potion(self) -> None:
-        """Usa poção de HP."""
         self.keyboard.press(self.combat.hp_potion_key)
         logger.info("Poção de HP usada")
 
     def use_mp_potion(self) -> None:
-        """Usa poção de MP."""
         self.keyboard.press(self.combat.mp_potion_key)
         logger.info("Poção de MP usada")
 
     def loot(self) -> None:
-        """Coleta itens do chão."""
         self.keyboard.press(self.farm.loot_key)
         logger.debug("Loot coletado")
 
     def click_on_target(self, x: int, y: int) -> None:
-        """Clica em um alvo na tela.
-
-        Args:
-            x: Coordenada X do alvo.
-            y: Coordenada Y do alvo.
-        """
         self.mouse.click(x, y)
         logger.debug("Clicou no alvo em (%d, %d)", x, y)
 
     def walk_to(self, x: int, y: int) -> None:
-        """Move o personagem clicando no chão.
-
-        Args:
-            x: Coordenada X do destino na tela.
-            y: Coordenada Y do destino na tela.
-        """
         self.mouse.click(x, y)
-        time.sleep(self.farm.walk_delay)
+        delay = self.farm.walk_delay + random.uniform(-0.1, 0.2)
+        time.sleep(max(0.1, delay))
         logger.debug("Andou para (%d, %d)", x, y)
 
-    def walk_circular(self, center_x: int, center_y: int, radius: int, steps: int = 8) -> None:
-        """Move o personagem em padrão circular.
-
-        Args:
-            center_x: Centro X da rotação.
-            center_y: Centro Y da rotação.
-            radius: Raio do movimento.
-            steps: Número de pontos no círculo.
-        """
+    def walk_circular(
+        self,
+        center_x: int,
+        center_y: int,
+        radius: int,
+        steps: int = 8,
+    ) -> None:
+        """Movimento circular com variação aleatória."""
+        offset = random.uniform(0, 2 * math.pi)
         for i in range(steps):
-            angle = (2 * math.pi * i) / steps
-            target_x = int(center_x + radius * math.cos(angle))
-            target_y = int(center_y + radius * math.sin(angle))
+            angle = offset + (2 * math.pi * i) / steps
+            r = radius + random.randint(-20, 20)
+            target_x = int(center_x + r * math.cos(angle))
+            target_y = int(center_y + r * math.sin(angle))
             self.walk_to(target_x, target_y)
-            time.sleep(self.farm.walk_delay)
+
+    def walk_square(
+        self,
+        center_x: int,
+        center_y: int,
+        size: int = 150,
+    ) -> None:
+        """Movimento em padrão quadrado com variação."""
+        half = size // 2
+        v = random.randint(-15, 15)
+        points = [
+            (center_x - half + v, center_y - half + v),
+            (center_x + half + v, center_y - half - v),
+            (center_x + half - v, center_y + half + v),
+            (center_x - half - v, center_y + half - v),
+        ]
+        for px, py in points:
+            self.walk_to(px, py)
+
+    def walk_random(
+        self,
+        center_x: int,
+        center_y: int,
+        radius: int = 200,
+    ) -> None:
+        """Movimento aleatório dentro de um raio."""
+        steps = random.randint(3, 6)
+        for _ in range(steps):
+            angle = random.uniform(0, 2 * math.pi)
+            r = random.randint(50, radius)
+            tx = int(center_x + r * math.cos(angle))
+            ty = int(center_y + r * math.sin(angle))
+            self.walk_to(tx, ty)
 
     def flee(self) -> None:
-        """Tenta fugir do combate."""
+        """Fuga com movimento aleatório para dificultar perseguição."""
         self.keyboard.press(self.combat.flee_key)
+        angle = random.uniform(0, 2 * math.pi)
+        dist = random.randint(200, 350)
+        fx = int(512 + dist * math.cos(angle))
+        fy = int(384 + dist * math.sin(angle))
+        self.mouse.click(fx, fy)
         logger.warning("Fugindo do combate!")
 
     def get_best_available_skill(self) -> int | None:
-        """Retorna o índice da melhor skill disponível (sem cooldown).
-
-        Returns:
-            Índice da skill ou None se todas estão em cooldown.
-        """
+        """Retorna o índice da melhor skill disponível."""
         for i, key in enumerate(self.combat.skill_keys):
             if self.keyboard.get_remaining_cooldown(key) <= 0:
                 return i
         return None
+
+    def screenshot_rare_drop(self, item_name: str) -> None:
+        """Captura screenshot quando um drop raro é encontrado."""
+        try:
+            import mss
+
+            self._screenshot_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_name = "".join(
+                c if c.isalnum() else "_" for c in item_name
+            )
+            filename = f"rare_{timestamp}_{safe_name}.png"
+            path = self._screenshot_dir / filename
+
+            with mss.mss() as sct:
+                sct.shot(output=str(path))
+
+            logger.info("Screenshot de drop raro salvo: %s", path)
+        except Exception:
+            logger.exception("Erro ao salvar screenshot de drop raro")

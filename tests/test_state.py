@@ -2,7 +2,12 @@
 
 import time
 
-from wyd_bot.decision.state import BotMode, GameState, PlayerStatus
+from wyd_bot.decision.state import (
+    BotMode,
+    GameState,
+    PlayerStatus,
+    SessionStats,
+)
 from wyd_bot.vision.detector import Detection
 
 
@@ -90,8 +95,57 @@ def test_idle_duration():
 
 def test_get_stats_summary():
     state = GameState()
-    state.kills_count = 10
-    state.items_looted = 5
+    state.stats.kills_count = 10
+    state.stats.items_looted = 5
     summary = state.get_stats_summary()
     assert "Kills: 10" in summary
     assert "Loot: 5" in summary
+
+
+def test_session_stats_kills_per_hour():
+    stats = SessionStats()
+    now = time.time()
+    stats._kills_history = [now - 60, now - 30, now - 10]
+    stats.kills_count = 3
+    kph = stats.kills_per_hour()
+    assert kph > 0
+
+
+def test_session_stats_record_kill():
+    stats = SessionStats()
+    stats.record_kill()
+    stats.record_kill()
+    assert stats.kills_count == 2
+    assert len(stats._kills_history) == 2
+
+
+def test_is_out_of_potions():
+    state = GameState()
+    assert state.is_out_of_potions is False
+    state.potions_remaining = 0
+    assert state.is_out_of_potions is True
+
+
+def test_deaths_setter():
+    state = GameState()
+    state.deaths = 5
+    assert state.stats.deaths == 5
+    assert state.deaths == 5
+
+
+def test_potion_time_tracking():
+    state = GameState()
+    assert state.time_since_hp_potion == float("inf")
+    state.last_hp_potion_time = time.time() - 3.0
+    assert state.time_since_hp_potion >= 2.9
+
+
+def test_get_weakest_monster():
+    state = GameState()
+    state.nearby_monsters = [
+        Detection("strong", 100, 100, 50, 50, 0.95),
+        Detection("weak", 200, 200, 50, 50, 0.3),
+    ]
+    weakest = state.get_weakest_monster()
+    assert weakest is not None
+    assert weakest.label == "weak"
