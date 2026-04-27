@@ -9,10 +9,13 @@ if TYPE_CHECKING:
 
 from wyd_bot.decision.state import BotMode, GameState
 from wyd_bot.decision.strategy import (
+    AutoBuffStrategy,
     FarmStrategy,
     FleeStrategy,
     HealStrategy,
     LootStrategy,
+    ResurrectStrategy,
+    ReturnToTownStrategy,
     Strategy,
 )
 from wyd_bot.utils.logger import setup_logger
@@ -36,7 +39,11 @@ class RuleEngine:
         """Registra uma nova estratégia."""
         self._strategies.append(strategy)
         self._strategies.sort(key=lambda s: s.priority, reverse=True)
-        logger.info("Estratégia registrada: %s (prioridade: %d)", strategy.name, strategy.priority)
+        logger.info(
+            "Estratégia registrada: %s (prioridade: %d)",
+            strategy.name,
+            strategy.priority,
+        )
 
     def register_defaults(
         self,
@@ -45,40 +52,45 @@ class RuleEngine:
         emergency_threshold: float = 0.2,
         flee_threshold: float = 0.15,
         screen_center: tuple[int, int] = (512, 384),
+        buff_keys: list[str] | None = None,
+        buff_interval: float = 300.0,
+        resurrect_key: str = "enter",
     ) -> None:
-        """Registra as estratégias padrão para WYD.
-
-        Args:
-            hp_threshold: Limiar de HP para curar.
-            mp_threshold: Limiar de MP para curar.
-            emergency_threshold: Limiar de HP para emergência.
-            flee_threshold: Limiar de HP para fugir.
-            screen_center: Centro da tela do jogo.
-        """
+        """Registra as estratégias padrão para WYD."""
+        self.register(ResurrectStrategy(resurrect_key))
         self.register(FleeStrategy(flee_threshold))
-        self.register(HealStrategy(hp_threshold, mp_threshold, emergency_threshold))
+        self.register(
+            HealStrategy(hp_threshold, mp_threshold, emergency_threshold)
+        )
+        self.register(ReturnToTownStrategy())
+        self.register(
+            AutoBuffStrategy(buff_keys or [], buff_interval)
+        )
         self.register(LootStrategy())
         self.register(FarmStrategy(screen_center))
         logger.info("Estratégias padrão registradas")
 
     def tick(self, state: GameState, actions: GameActions) -> str | None:
-        """Executa um tick de decisão.
-
-        Avalia todas as estratégias e executa a de maior prioridade.
-
-        Args:
-            state: Estado atual do jogo.
-            actions: Ações disponíveis.
-
-        Returns:
-            Nome da estratégia executada ou None.
-        """
+        """Executa um tick de decisão."""
         self._tick_count += 1
 
         if not state.player.is_alive:
+            if state.mode != BotMode.DEAD:
+                state.stats.deaths += 1
+                logger.warning(
+                    "Personagem morreu! Total mortes: %d",
+                    state.stats.deaths,
+                )
             state.mode = BotMode.DEAD
-            state.deaths += 1
-            logger.warning("Personagem morreu! Total mortes: %d", state.deaths)
+            for strategy in self._strategies:
+                if (
+                    strategy.name == "Resurrect"
+                    and strategy.should_activate(state)
+                ):
+                    self._active_strategy = strategy
+                    state.mode = BotMode.RESURRECTING
+                    strategy.execute(state, actions)
+                    return strategy.name
             return None
 
         for strategy in self._strategies:
@@ -86,7 +98,11 @@ class RuleEngine:
                 if self._active_strategy != strategy:
                     logger.info(
                         "Mudando estratégia: %s -> %s",
-                        self._active_strategy.name if self._active_strategy else "None",
+                        (
+                            self._active_strategy.name
+                            if self._active_strategy
+                            else "None"
+                        ),
                         strategy.name,
                     )
                     self._active_strategy = strategy
@@ -106,13 +122,19 @@ class RuleEngine:
             "Heal": BotMode.HEALING,
             "Loot": BotMode.LOOTING,
             "Farm": BotMode.FARMING,
+            "Resurrect": BotMode.RESURRECTING,
+            "AutoBuff": BotMode.BUFFING,
+            "ReturnToTown": BotMode.RETURNING_TO_TOWN,
         }
         return mode_map.get(strategy.name, BotMode.IDLE)
 
     @property
     def active_strategy_name(self) -> str:
-        """Retorna o nome da estratégia ativa."""
-        return self._active_strategy.name if self._active_strategy else "None"
+        return (
+            self._active_strategy.name
+            if self._active_strategy
+            else "None"
+        )
 
     @property
     def tick_count(self) -> int:
