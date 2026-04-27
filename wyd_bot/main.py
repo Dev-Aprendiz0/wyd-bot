@@ -183,7 +183,7 @@ class WYDBot:
             pass
         elif self.state.has_target and not self.state.has_monsters_nearby:
             self.state.target = None
-            self.state.kills_count += 1
+            self.state.stats.record_kill()
 
     def _save_error_screenshot(self) -> None:
         """Salva screenshot quando ocorre erro."""

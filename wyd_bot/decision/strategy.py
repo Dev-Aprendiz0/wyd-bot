@@ -356,6 +356,7 @@ class LootStrategy(Strategy):
                 item.center[0] + ox,
                 item.center[1] + oy,
             )
+            actions.loot()
             state.stats.record_loot()
             state.last_loot_time = time.time()
             delay = random.uniform(0.15, 0.35)
