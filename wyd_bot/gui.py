@@ -247,6 +247,19 @@ class BotGUI:
             fill=tk.X, **pad
         )
 
+        self._calibrate_btn = ttk.Button(
+            frame,
+            text="Calibrar",
+            command=self._on_calibrate,
+            style="Start.TButton",
+            width=18,
+        )
+        self._calibrate_btn.pack(**pad)
+
+        ttk.Separator(frame, orient=tk.HORIZONTAL).pack(
+            fill=tk.X, **pad
+        )
+
         self._config_var = tk.StringVar(value="config/default.yaml")
         ttk.Label(
             frame, text="Config:", style="Status.TLabel"
@@ -485,6 +498,12 @@ class BotGUI:
                 self._pause_btn.configure(text="Pausar")
                 self._status_var.set("Rodando")
                 logger.info("Bot continuado via GUI")
+
+    def _on_calibrate(self) -> None:
+        from wyd_bot.calibration import CalibrationWindow
+
+        config_path = self._config_var.get().strip()
+        CalibrationWindow(self.root, config_path)
 
     def _on_stop(self) -> None:
         if self._bot:
